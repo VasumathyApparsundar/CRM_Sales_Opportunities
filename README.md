@@ -205,6 +205,208 @@ LIMIT 5;
 
 ![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/05bf5059-0d9c-4e16-b81e-9c66845cdfac)
 
+ ### Sales_teams:
+
+ **Data Description**
+ 
+1. sales_agent: Represents the name of the sales agent.
+   
+2. manager: Indicates the name of the manager overseeing the sales agent.
+   
+3. regional_office: Specifies the regional office to which both the sales agent and the manager belong.
+
+**Questions**
+
+1. How many sales agents are there in each regional office, and what is the distribution of sales agents across offices?
+   
+SELECT regional_office, COUNT(*) AS num_sales_agents
+FROM sales_teams
+GROUP BY regional_office;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/07b9411a-498a-430d-a5a4-79120802e41d)
+
+
+2.  Who are the managers overseeing the sales agents, and how many sales agents does each manager supervise?
+   
+SELECT manager, COUNT(*) AS num_sales_agents
+FROM sales_teams
+GROUP BY manager;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/98809fbe-4a3e-4987-8960-c74816059e8b)
+
+3. Which regional office has the highest number of sales agents, and how does it compare to other offices?
+   
+SELECT regional_office, COUNT(*) AS num_sales_agents
+FROM sales_teams
+GROUP BY regional_office;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/544abf52-916f-4f62-9258-55498d050426)
+
+## Product Table:
+
+**Data Description:**
+
+1. product: This column represents the name of the product.
+   
+2. series: Indicates the series or product line to which the product belongs.
+
+3.  sales_price: Specifies the sales price of the product.
+
+**Questions:**
+
+1.  What is the total number of products in each series, and how does the distribution of products vary across series?
+   
+SELECT series, COUNT(*) AS num_products
+FROM products
+GROUP BY series;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/5d9cc9a7-71ea-41c3-ae56-ed61296df666)
+
+2. What is the average sales price for each series, and how does it compare across different series?
+   
+SELECT series, AVG(sales_price) AS avg_sales_price
+FROM products
+GROUP BY series; 
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/81115c5f-579c-4931-878b-28cd5ea86502)
+
+3.  Which product has the highest and lowest sales price, and what are their respective series?
+   
+SELECT product, series, sales_price
+FROM products
+WHERE sales_price = (SELECT MAX(sales_price) FROM products)
+UNION
+SELECT product, series, sales_price
+FROM products
+WHERE sales_price = (SELECT MIN(sales_price) FROM products);
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/32ae4aee-c41d-4c7b-b77c-0d8ca37be0fc)
+
+**Insights:**
+
+1. Which product series has contributed the most to the total revenue, and what is the total revenue for each series?
+   
+SELECT pr.series, SUM(sp.close_value) AS total_revenue
+FROM products pr
+JOIN sales_pipeline sp ON pr.product = sp.product
+GROUP BY pr.series;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/ab7b5b06-705b-48ec-8422-931d2e2ead22)
+
+2. What is the win rate (percentage of won opportunities) for each sales agent, and how does it vary across different agents (top 5)?
+   
+SELECT st.sales_agent, 
+       (COUNT(CASE WHEN sp.deal_stage = 'Won' THEN 1 END) / COUNT(*)) * 100 AS win_rate_percentage
+FROM sales_teams st
+LEFT JOIN sales_pipeline sp ON st.sales_agent = sp.sales_agent
+GROUP BY st.sales_agent
+ORDER BY win_rate_percentage DESC
+LIMIT 5;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/8f50832a-5ae7-4e46-a959-d2c55ae98b92)
+
+3. What is the average deal value for each product, and how does it vary across different products?
+
+SELECT product, round(AVG(close_value), 2) AS avg_deal_value
+FROM sales_pipeline
+GROUP BY product
+ORDER BY avg_deal_value DESC;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/09fa4af7-cc9f-4f37-99a7-453685646e2e)
+
+4. How many opportunities are in each deal stage for a specific sales agent, and what is their distribution?
+   
+SELECT sales_agent, deal_stage, COUNT(*) AS num_opportunities
+FROM sales_pipeline
+GROUP BY sales_agent, deal_stage
+ORDER BY num_opportunities DESC
+LIMIT 5;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/834c09da-f42c-4b5e-8146-82a3ef43ab89)
+
+5. What is the average win rate for each manager, and how does it compare across different managers?
+   
+SELECT st.manager, 
+       (COUNT(CASE WHEN sp.deal_stage = 'Won' THEN 1 END) / COUNT(*)) * 100 AS avg_win_rate
+FROM sales_teams st
+JOIN sales_pipeline sp ON st.sales_agent = sp.sales_agent
+GROUP BY st.manager;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/c45d05f8-3471-4119-8139-368179fc821e)
+
+6. What is the distribution of deal stages for each product series?
+   
+SELECT p.series, sp.deal_stage, COUNT(*) AS num_opportunities
+FROM sales_pipeline sp
+JOIN products p ON sp.product = p.product
+GROUP BY p.series, sp.deal_stage;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/14936f22-1a31-497f-9beb-6f343a7d077c)
+
+7. How many opportunities are in each deal stage for a specific regional office, and what is their distribution?
+   
+SELECT st.regional_office, sp.deal_stage, COUNT(*) AS num_opportunities
+FROM sales_pipeline sp
+JOIN sales_teams st ON sp.sales_agent = st.sales_agent
+GROUP BY st.regional_office, sp.deal_stage;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/910a4849-e6c7-4db3-b82f-81acf9a04472)
+
+8. Which sales agent has generated the highest revenue for the company, and which account did they primarily engage with?
+   
+SELECT st.sales_agent, a.account, SUM(sp.close_value) AS total_revenue
+FROM sales_pipeline sp
+INNER JOIN sales_teams st ON sp.sales_agent = st.sales_agent
+INNER JOIN accounts a ON sp.account = a.account
+GROUP BY st.sales_agent, a.account
+ORDER BY total_revenue DESC
+LIMIT 1;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/6beda87b-48e4-40af-ad18-45d03212dea1)
+
+9.  What is the average deal value for each product series, and which series has the highest average deal value?
+    
+SELECT p.series, AVG(sp.close_value) AS avg_deal_value
+FROM sales_pipeline sp
+INNER JOIN products p ON sp.product = p.product
+GROUP BY p.series
+ORDER BY avg_deal_value DESC
+LIMIT 1;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/e668e938-8667-4973-a31f-77031c7cc43e)
+
+10. How does the win rate vary across different regional offices, and which office has the highest win rate?
+    
+SELECT st.regional_office, 
+       (COUNT(CASE WHEN sp.deal_stage = 'Won' THEN 1 END) / COUNT(*)) * 100 AS win_rate_percentage
+FROM sales_pipeline sp
+INNER JOIN sales_teams st ON sp.sales_agent = st.sales_agent
+GROUP BY st.regional_office
+ORDER BY win_rate_percentage DESC
+LIMIT 1;
+
+![image](https://github.com/VasumathyApparsundar/CRM_Sales_Opportunities/assets/167323908/c9f788a0-7c00-44ff-ab80-9666b70b0c7a)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
